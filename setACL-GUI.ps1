@@ -7,13 +7,14 @@ Begin{
 	$error.clear();
 	Add-Type -AssemblyName System.Windows.Forms | out-null
 	Add-Type -AssemblyName System.Drawing | out-null
-	
-    $global:imageList = new-Object System.Windows.Forms.ImageList 
-    $System_Drawing_Size = New-Object System.Drawing.Size 
+	Add-Type -AssemblyName System.security | out-null
+
+    $global:imageList = new-Object System.Windows.Forms.ImageList
+    $System_Drawing_Size = New-Object System.Drawing.Size
     $System_Drawing_Size.Width = 16
-    $System_Drawing_Size.Height = 16 
-    $global:imageList.ImageSize = $System_Drawing_Size 
-    
+    $System_Drawing_Size.Height = 16
+    $global:imageList.ImageSize = $System_Drawing_Size
+
 	$icons = @{
 		'folder' = "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAEUklEQVR42u2WTYgcVRDH681k14yaHKIBMYoYjeawIBoWFBRlVVZiEC+CIhE8xFPUq7kIAb14MAgePPkRRZQseBQVPHjRHQ1pCUFwTUBMNisz+zHZmdme6X6v/L9X9Xom2WS3Bddc0kzR3e/1vPrVv+pVt6GrfJhrAJcOnPq8dttIlT6rVunRS+f+nOP3Jw6mb+NyAdbfEIA/jtUa2+954eatdzxHxD0itwLrEmWL1Jj5gr75/uTU/sO9N/DoX/8FxCqA01M13jnxEZxaAGB9Toldh0x+Ae6aNPPTh9Tq8NmRqmlXKmTDCsb/zOrVhodwMfbiylOqXndtgEfegeOcyMJpbxGOYd0GeJbIZF1yPnADc7C8TxWAOn9tczIVgBs3WL0CGzF0+twm2vV8+hLufvDZXBtg/FU4hfP2WViTslaDOp0lyjijFWsptQ4O+V/LnWbUv/9A+jQuf4R1Lg9wDABjeylrnqFW8zz1R7bRTfe9RqPX74DTlKqjW6GO03/GEGFGz8QyH+oHSrsLEBOq5/P069dHMgAcwkNfwc5cFmDmyxpvouvohlsnaNvu/VTdvB2LZVoPuRqLI8OyRDjFpZw843rg6JKxLWK7iBpaoBPffpI/8Ep6BA99Cju5CuDU0drhClXe3LHnddpy+6TMshUAn+MIQTl8CoRhlmsftfWRNrFjmiFisvMBgFwb0z1KphtrA/z28Wbe+cR7NLrlLokkLGw1agXAQlhZx3viKG/A6d8wFCrgDIAZwIbyAB7HTkw31wfY/ezUQGIFYMpQ2BHCO10Qpz5ayCsKyTwHhUQp47Iw5//v55N6GYBnjoZrz2BCPq1G4LflEtaew5pzuO+Is2gBEs7g0JBXQJWgrABM6vMlAPZ9oMNOKLzUPufZLLb+LCDa4T6O+4WDQgEkK4yLez3j2WR6oQTA3ndF/ZAAh6h8Gz4HdedC7k1MC9uQY+/IqAocHKkSqlpQRIGS+lIJgMm3dIthyi7D8WzIs6TDqTIOTwBAdwiT7hQPpVGznkM6FDCpt9YHuPfJQ8E3WzSq7Lxso+KIRSm1YWIqgiK5Oo9QAwXi1k3qyyUUePygRAjn5J37FwrLrvc1EZQg79AN6kC3qqTEFvXAWiPxueTndgkFHnsZUc+H9mmGpj2C0YYzUMBJ5B7IO6IIJCYgUi8C0C0B8PC+0FBirzcUa5JVAZac+xpwCnPRrhiG0EL1Y8YCIC2Rggcfkm8ANsE9F+/02Jx81DykgHZFI0UpteBEfh7UiAdOfumXUGB8TKLE282I6EUSTOhO0h847goFiSpIDVgFcENtGwDH8xIKjO/CnysqvSmKP9zh7Re6tDoPCoR08JD0A6cCYoux5LgrocCeO0MPCBM8/E3F2p4l+nAunEl/CMXI9uLIKfYOD0DrA9AGHiv9dQBw3A2b1PNGHF6O32Hf0RW+iG6E3aLnjTi8wsswfDxc4Zvw/z6uAVx1gH8A72icTrkYCVcAAAAASUVORK5CYII=";
 		'computer' = "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";
@@ -30,14 +31,14 @@ Begin{
 		$iconimageBytes = [Convert]::FromBase64String($icons[$_])
 		$ims = New-Object IO.MemoryStream($iconimageBytes, 0, $iconimageBytes.Length)
 		$ims.Write($iconimageBytes, 0, $iconimageBytes.Length);
-		 
+
 		$global:imageList.Images.Add($_, [System.Drawing.Icon]::FromHandle((new-object System.Drawing.Bitmap -argument $ims).GetHIcon()) )
 	}
-	
-    
-	
-	 
-	
+
+
+
+
+
 	class FormHelper{
 		static [object] getFormControl(
 			$Control = "Form",
@@ -66,88 +67,205 @@ Begin{
 					}
 				}
 			}
-			return $Control	
+			return $Control
 		}
-        
-        
+
+
 	}
 
 	Class SetACL{
 		$form = $null;
-        
-        
+
+
 		[void] mnuFileOpen(){
 			write-host 'test'
 		}
-	
+        [string] getPermissions( $acl ){
+            $accessMask = [ordered]@{
+                [uint32]'0x80000000' = 'GenericRead'
+                [uint32]'0x40000000' = 'GenericWrite'
+                [uint32]'0x20000000' = 'GenericExecute'
+                [uint32]'0x10000000' = 'GenericAll'
+                [uint32]'0x02000000' = 'MaximumAllowed'
+                [uint32]'0x01000000' = 'AccessSystemSecurity'
+                [uint32]'0x00100000' = 'Synchronize'
+                [uint32]'0x00080000' = 'WriteOwner'
+                [uint32]'0x00040000' = 'WriteDAC'
+                [uint32]'0x00020000' = 'ReadControl'
+                [uint32]'0x00010000' = 'Delete'
+                [uint32]'0x00000100' = 'WriteAttributes'
+                [uint32]'0x00000080' = 'ReadAttributes'
+                [uint32]'0x00000040' = 'DeleteChild'
+                [uint32]'0x00000020' = 'Execute/Traverse'
+                [uint32]'0x00000010' = 'WriteExtendedAttributes'
+                [uint32]'0x00000008' = 'ReadExtendedAttributes'
+                [uint32]'0x00000004' = 'AppendData/AddSubdirectory'
+                [uint32]'0x00000002' = 'WriteData/AddFile'
+                [uint32]'0x00000001' = 'ReadData/ListDirectory'
+            }
+            
+            $simplePermissions = [ordered]@{
+                [uint32]'0x1f01ff' = 'FullControl'
+                [uint32]'0x0301bf' = 'Modify'
+                [uint32]'0x0200a9' = 'ReadAndExecute'
+                [uint32]'0x02019f' = 'ReadAndWrite'
+                [uint32]'0x020089' = 'Read'
+                [uint32]'0x000116' = 'Write'
+            }
+            
+            $fileSystemRights = $acl | Select-Object -Expand FileSystemRights -First 1
+            $fsr = $fileSystemRights.value__
+            $permissions = @()
+            $permissions += $simplePermissions.Keys | ForEach-Object {
+                  if (($fsr -band $_) -eq $_) {
+                    $simplePermissions[$_]
+                    $fsr = $fsr -band (-bnot $_)
+                  }
+                }
+            $permissions += $accessMask.Keys |
+                Where-Object { $fsr -band $_ } |
+                ForEach-Object { $accessMask[$_] }
+                
+            return $permissions    
+        }
+        [string] getAppliesTo( $acl ){
+            $appliesTo = '';
+            switch( $acl.PropagationFlags ){
+                ([System.Security.AccessControl.PropagationFlags]::None){
+                    if($acl.InheritanceFlags -eq ( [System.Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [System.Security.AccessControl.InheritanceFlags]::ObjectInherit)){
+                        $appliesTo = 'This Folder, Subfolders and Files';
+                    }
+                    if($acl.InheritanceFlags -eq ( [System.Security.AccessControl.InheritanceFlags]::ContainerInherit)){
+                        $appliesTo = 'This Folder and Subfolders';
+                    }
+                    if($acl.InheritanceFlags -eq ( [System.Security.AccessControl.InheritanceFlags]::ObjectInherit)){
+                        $appliesTo = 'This Folder and Files';
+                    }
+                    if($acl.InheritanceFlags -eq ( [System.Security.AccessControl.InheritanceFlags]::None)){
+                        $appliesTo = 'This Folder only';
+                    }
+                    break;
+                }
+                ([System.Security.AccessControl.PropagationFlags]::InheritOnly){
+                    if($acl.InheritanceFlags -eq ( [System.Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [System.Security.AccessControl.InheritanceFlags]::ObjectInherit)){
+                        $appliesTo = 'Subfolders and Files only';
+                    }
+                    if($acl.InheritanceFlags -eq ( [System.Security.AccessControl.InheritanceFlags]::ContainerInherit)){
+                        $appliesTo = 'Subfolders only';
+                    }
+                    if($acl.InheritanceFlags -eq ( [System.Security.AccessControl.InheritanceFlags]::ObjectInherit)){
+                        $appliesTo = 'Files only';
+                    }
+                    break;
+                }
+                ([System.Security.AccessControl.PropagationFlags]::NoPropagateInherit){
+                    if($acl.InheritanceFlags -eq ( [System.Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [System.Security.AccessControl.InheritanceFlags]::ObjectInherit)){
+                        $appliesTo = 'This Folder, Subfolders and Files';
+                    }
+                    if($acl.InheritanceFlags -eq ( [System.Security.AccessControl.InheritanceFlags]::ContainerInherit)){
+                        $appliesTo = 'This folder and Subfolders';
+                    }
+                    if($acl.InheritanceFlags -eq ( [System.Security.AccessControl.InheritanceFlags]::ObjectInherit)){
+                        $appliesTo = 'This folder and Files';
+                    }
+                    break;
+                }
+            }
+            return $appliesTo;
+        }
+        [void] logEvent($module, $msg){
+            $this.form.Controls['mainContent'].panel2.controls['log'].text += "`r`n[$( get-date -Format 'MM/dd/yyyy hh:mm:ss' )] - $($module) - $($msg)";
+            $this.form.Controls['mainContent'].panel2.controls['log'].SelectionStart = $this.form.Controls['mainContent'].panel2.controls['log'].Text.Length;
+            $this.form.Controls['mainContent'].panel2.controls['log'].ScrollToCaret();
+
+        }
         [void] expandFileSystem( $node ){
 			$node.nodes.clear()
-		
+
             $path = "$($node.tag.split('|')[1])\";
+            $this.logEvent("FileSystem", "Analyzing $($path)")
             # gci -path $path -errorAction SilentlyContinue | ft |out-string | write-host
 			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObject'].text = $path
 			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectType'].text = "File / Directory"
-			
+
 			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectOwner'].text =  ( get-acl -path $path -errorAction SilentlyContinue | select -expand Owner )
-			
+
 			gci -path $path  -errorAction SilentlyContinue | ? {$_.PSIsContainer -eq $true } | sort Name | % {
 				try{
 					if( (gci ($_.fullname) -errorAction SilentlyContinue  ) -ne $null){
 						$node.Nodes.Add($_,$_, $global:imageList.Images.indexOfKey('folder'), $global:imageList.Images.indexOfKey('folder'))
-						$node.Nodes[$_].tag = "FileSystem|$($_.fullname)"                        
-							
+						$node.Nodes[$_].tag = "FileSystem|$($_.fullname)"
+
 						if( (gci ($_.fullname) -errorAction SilentlyContinue  | ? { $_.PSIsContainer -eq $true } | Measure-Object | select -expand count) -gt 0){
 							$node.Nodes[$_].Nodes.Add($null,$null)
 						}
-						
+
 						$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].rows.clear()
 						get-acl -path $path -errorAction SilentlyContinue| select -expand access | % {
-							
+
 							$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].rows.add(
-								
 								$_.AccessControlType,
 								$_.IdentityReference,
-								$_.FileSystemRights,
-								'test',
-								'Delete'
-								
+								$this.getPermissions($_),
+								$this.getAppliesTo($_)
 							)
 						}
-						
+
 					}
 				}catch{
-				
+
 				}
-			
-				
-			}            
-        }
+			}
+            
+            gci -path $path  -errorAction SilentlyContinue | ? {$_.PSIsContainer -eq $false } | sort Name | % {
+                try{
+                    if( (gci ($_.fullname) -errorAction SilentlyContinue  ) -ne $null){
+						$node.Nodes.Add($_,$_, $global:imageList.Images.indexOfKey('folder'), $global:imageList.Images.indexOfKey('folder'))
+						$node.Nodes[$_].tag = "FileSystem|$($_.fullname)"
+                        
+                        
+                        
+                        
+                        if (!$global:imageList.Images.ContainsKey($_.Extension)){
+                            $iconForFile = [System.Drawing.Icon]::ExtractAssociatedIcon($_.FullName);
+                            $global:imageList.Images.Add($_.Extension, $iconForFile);
+                        }
+                        $node.Nodes[$_].ImageKey = $_.Extension;
         
+        
+                        
+                    }
+                }catch{
+                
+                }
+            }
+        }
+
 		[void] expandRegistry( $node ){
 		clear
 			# $node | fl | out-string | write-host
             $path = "$($node.tag.split('|')[1])\";
-			
+
 			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObject'].text = $path
 			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectType'].text = "Registry"
-			
+
 			# write-host $path;
             # gci -path $path  -errorAction SilentlyContinue | ft |out-string | write-host
 			$node.nodes.clear()
 			gci -path $path  -errorAction SilentlyContinue | ? {$_.PSIsContainer -eq $true } | sort Name | % {
 				$node.Nodes.Add($_.PSChildname,$_.PSChildname, $global:imageList.Images.indexOfKey('node'), $global:imageList.Images.indexOfKey('node'))
 				$node.Nodes[$_.PSChildname].tag = "Registry|$($_.name.replace('HKEY_LOCAL_MACHINE','hklm:').replace('HKEY_CURRENT_USER','hkcu:'))"
-				
+
 				if( (gci ($_.name.replace('HKEY_LOCAL_MACHINE','hklm:').replace('HKEY_CURRENT_USER','hkcu:')) -errorAction SilentlyContinue  | ? { $_.PSIsContainer -eq $true } | Measure-Object | select -expand count) -gt 0){
 					$node.Nodes[$_.PSChildname].Nodes.Add($null,$null)
 				}
-				
-			}            
+
+			}
         }
-		
+
         [void] nodeClicked( $tree ){
 			if($tree.selectedNode.level -le 1){
-				$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObject'].text = $tree.selectedNode.text	
+				$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObject'].text = $tree.selectedNode.text
 			}elseif($tree.selectedNode.tag -ne $null){
                 switch( $tree.selectedNode.tag.split('|')[0] ){
                     "FileSystem" {
@@ -158,11 +276,11 @@ Begin{
                         $this.expandRegistry( $tree.selectedNode );
                         break;
                     }
-                } 
+                }
             }
-            
+
         }
-        
+
 		[void] generateForm(){
 			$script:self = $this
 			$this.form = [FormHelper]::getFormControl('Form', @{ Width = "800"; Height = "400"; Text = "SetACL PowerShell Studio"; StartPosition = "CenterScreen"; FormBorderStyle = "Sizable"; Topmost = $false; MinimizeBox = $true; MaximizeBox = $true;} )
@@ -174,30 +292,27 @@ Begin{
 			$this.form.controls['menuMain'].Items['menuFile'].DropDownItems['menuOpen'].Add_Click({$script:self.mnuFileOpen()})
 
             $this.form.controls.add( ( [FormHelper]::getFormControl( 'statusbar', @{ Name = 'status';}) ) );
-            
-			$this.form.Controls.Add( ( [FormHelper]::getFormControl( 'SplitContainer', @{ Name = 'mainContent'; Dock = 'Fill'; SplitterWidth = 2; Orientation = 'Horizontal'; SplitterDistance = '200'; Panel1MinSize = '200'; backcolor = '#cccccc';} ) ) ) | out-null
+
+			$this.form.Controls.Add( ( [FormHelper]::getFormControl( 'SplitContainer', @{ Name = 'mainContent'; Dock = 'Fill'; SplitterWidth = 2; Orientation = 'Horizontal'; SplitterDistance = '200'; Panel1MinSize = '200'; backcolor = '#cccccc'; AutoSize=$true;} ) ) ) | out-null
 
 			$this.form.controls['mainContent'].panel1.backcolor = 'white';
 			$this.form.controls['mainContent'].panel2.backcolor = 'white';
 
-			$this.form.Controls['mainContent'].panel1.controls.add( ( 
-				[FormHelper]::getFormControl( 'SplitContainer', @{Name = 'mainBody'; Dock = 'Fill'; SplitterWidth = 2; Panel1MinSize = 100; Panel2MinSize = 100;  backcolor = '#cccccc'} ) 
+			$this.form.Controls['mainContent'].panel1.controls.add( (
+				[FormHelper]::getFormControl( 'SplitContainer', @{Name = 'mainBody'; Dock = 'Fill'; SplitterWidth = 2; Panel1MinSize = 100; Panel2MinSize = 100;  backcolor = '#cccccc'; AutoSize=$true; } )
 			) ) | out-null
 
 			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.backcolor = 'white';
 			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.backcolor = 'white';
 
-            
             $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls.add( (
-                [FormHelper]::getFormControl('treeview', @{ Name = "treeNodes"; Dock = "Fill"; 'ImageList' = $global:imageList;} )
+                [FormHelper]::getFormControl('treeview', @{ Name = "treeNodes"; Dock = "Fill"; 'ImageList' = $global:imageList; AutoSize=$true;} )
             ) ) | out-null
-
-
 
 			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls.add( (
-                [FormHelper]::getFormControl('FlowLayoutPanel', @{ Name = "contentPanel"; dock="Fill"; AutoScroll=$true; FlowDirection = 'TopDown'; WrapContents = $false;} )
+                [FormHelper]::getFormControl('FlowLayoutPanel', @{ Name = "contentPanel"; dock="Fill"; AutoScroll=$true; FlowDirection = 'TopDown'; WrapContents = $false; AutoSize=$true; } )
             ) ) | out-null
-			
+
 			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls.add( (
                 [FormHelper]::getFormControl('label', @{ Name = "selObject"; Text="SelObject"; AutoSize = $true; } )
             )) | out-null
@@ -205,107 +320,105 @@ Begin{
 			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls.add( (
                 [FormHelper]::getFormControl('label', @{ Name = "selObjectType"; Text="SelObjectType"; AutoSize = $true;} )
             ) ) | out-null
-			
+
 			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls.add( (
                 [FormHelper]::getFormControl('label', @{ Name = "selObjectOwner"; Text="SelObjectOwner"; AutoSize = $true;} )
             ) ) | out-null
-			
-			
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls.add( (
-				[FormHelper]::getFormControl('DataGridView', @{ Name = "selObjectPerms"; Text="SelObjectPerms"; Width= ($this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].width - 25); } )
-				
-            ) ) | out-null
-			
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].Columns.Add( 
-				[FormHelper]::getFormControl('DataGridViewTextboxColumn', @{ Name = "Type"; } ) 
-			)
-				
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].Columns.Add( 
-				[FormHelper]::getFormControl('DataGridViewTextboxColumn', @{ Name = "Name"; } ) 
-			)
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].Columns.Add( 
-				[FormHelper]::getFormControl('DataGridViewTextboxColumn', @{ Name = "Permissions"; } ) 
-			)
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].Columns.Add( 
-				[FormHelper]::getFormControl('DataGridViewTextboxColumn', @{ Name = "Applies To"; } ) 
-			)
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].Columns.Add( 
-				[FormHelper]::getFormControl('DataGridViewTextboxColumn', @{ Name = "Actions"; } ) 
-			)
-			
-			
-				
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls.add( (
-                [FormHelper]::getFormControl('label', @{ Name = "selObjectActions"; Text="SelObjectActions"; AutoSize = $true;} )
-            ) ) | out-null
-			
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls.add( (
-                [FormHelper]::getFormControl('label', @{ Name = "selObjectActions2"; Text="SelObjectActions2"; AutoSize = $true;} )
-            ) ) | out-null
-			
 
-			
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls| fl | out-string | write-host
-			
-			
+			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls.add( (
+				[FormHelper]::getFormControl('DataGridView', @{ Name = "selObjectPerms"; Text="SelObjectPerms"; Width= ($this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].width - 25); Autosize=$true; Anchor="Top,left"; AutoSizeColumnsMode ="Fill";} )
+            ) ) | out-null
+
+            $this.form.add_Resize({
+                $script:self.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].width = ($script:self.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].width - 25);
+            })
+            
+            $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.add_Resize({
+                $script:self.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].width = ($script:self.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].width - 25);
+            })
+
+            $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.add_Resize({
+                $script:self.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].width = ($script:self.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].width - 25);
+            })
+
+			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].Columns.Add(
+				[FormHelper]::getFormControl('DataGridViewTextboxColumn', @{ Name = "Type"; } )
+			)
+
+			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].Columns.Add(
+				[FormHelper]::getFormControl('DataGridViewTextboxColumn', @{ Name = "Name"; } )
+			)
+			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].Columns.Add(
+				[FormHelper]::getFormControl('DataGridViewTextboxColumn', @{ Name = "Permissions"; } )
+			)
+			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].Columns.Add(
+				[FormHelper]::getFormControl('DataGridViewTextboxColumn', @{ Name = "Applies To"; } )
+			)
+
 			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObject'].font = New-Object System.Drawing.Font("Arial",18, (iex "[System.Drawing.FontStyle]::Bold") ) ;
 
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].add_BeforeExpand( {				
-				$script:self.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].selectedNode = $_.node				
+			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].add_BeforeExpand( {
+				$script:self.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].selectedNode = $_.node
 			} )
 			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].add_AfterSelect( {$script:self.nodeClicked( $this ) } )
-			
+
             $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes.Add("root",(hostname), $global:imageList.Images.indexOfKey('computer'),$global:imageList.Images.indexOfKey('computer') );
-           
+
             $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes.Add('FileSystem','FileSystem', $global:imageList.Images.indexOfKey('filesystem'), $global:imageList.Images.indexOfKey('filesystem'))
-            
+
             $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes.Add('Printers','Printers', $global:imageList.Images.indexOfKey('printer'), $global:imageList.Images.indexOfKey('printer'))
-            
+
             $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes.Add('Registry', 'Registry', $global:imageList.Images.indexOfKey('registry'), $global:imageList.Images.indexOfKey('registry'))
-            
+
             $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes.Add('Services', 'Services', $global:imageList.Images.indexOfKey('service'), $global:imageList.Images.indexOfKey('service'))
-           
+
             $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes.Add('Shares','Shares', $global:imageList.Images.indexOfKey('share'), $global:imageList.Images.indexOfKey('share'))
-            
+
             get-psdrive | ? {$_.Provider.Name -eq 'FileSystem' } | Sort Name | % {
                 $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes['FileSystem'].Nodes.add( "$($_.name):", "$($_.name):", $global:imageList.Images.indexOfKey('drive'), $global:imageList.Images.indexOfKey('drive') )
                 $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes['FileSystem'].Nodes[ "$($_.name):" ].Tag = "FileSystem|$($_.name):"
-				
+
 				if( (gci "$($_.fullname)\" -errorAction SilentlyContinue  | ? { $_.PSIsContainer -eq $true } | Measure-Object | select -expand count) -gt 0){
 					$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes['FileSystem'].Nodes[ "$($_.name):" ].Nodes.Add($null,$null)
 				}
-				
+
             }
-            
-            get-printer | Sort Name | % { 
-                $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes['Printers'].Nodes.add("$($_.name)", "$($_.name)", $global:imageList.Images.indexOfKey('printer'), $global:imageList.Images.indexOfKey('printer') )            
+
+            get-printer | Sort Name | % {
+                $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes['Printers'].Nodes.add("$($_.name)", "$($_.name)", $global:imageList.Images.indexOfKey('printer'), $global:imageList.Images.indexOfKey('printer') )
             }
-           
-            get-psdrive | ? {$_.Provider.Name -eq 'Registry' } | Sort Name | % { 
-                $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes['Registry'].Nodes.add("$($_.name):", "$($_.name):", $global:imageList.Images.indexOfKey('hive'), $global:imageList.Images.indexOfKey('hive') )            
-				
+
+            get-psdrive | ? {$_.Provider.Name -eq 'Registry' } | Sort Name | % {
+                $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes['Registry'].Nodes.add("$($_.name):", "$($_.name):", $global:imageList.Images.indexOfKey('hive'), $global:imageList.Images.indexOfKey('hive') )
+
 				$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes['Registry'].Nodes[ "$($_.name):" ].Tag = "Registry|$($_.name):"
 				if( (gci "$($_.fullname)\" -errorAction SilentlyContinue  | ? { $_.PSIsContainer -eq $true } | Measure-Object | select -expand count) -gt 0){
 					$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes['Registry'].Nodes[ "$($_.name):" ].Nodes.Add($null,$null)
 				}
             }
-            
-            get-service | Sort Name | % { 
-                $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes['Services'].Nodes.add("$($_.name)", "$($_.name)", $global:imageList.Images.indexOfKey('service'), $global:imageList.Images.indexOfKey('service') )            
+
+            get-service | Sort Name | % {
+                $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes['Services'].Nodes.add("$($_.name)", "$($_.name)", $global:imageList.Images.indexOfKey('service'), $global:imageList.Images.indexOfKey('service') )
             }
-            
-            get-SmbShare | Sort Name | % { 
-                $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes['Shares'].Nodes.add("$($_.name)", "$($_.name)", $global:imageList.Images.indexOfKey('share'), $global:imageList.Images.indexOfKey('share') )            
+
+            get-SmbShare | Sort Name | % {
+                $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes['Shares'].Nodes.add("$($_.name)", "$($_.name)", $global:imageList.Images.indexOfKey('share'), $global:imageList.Images.indexOfKey('share') )
             }
-            
+
             $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].expand();
-			$this.form.Controls['mainContent'].BringToFront()
             
+            $this.form.Controls['mainContent'].panel2.controls.Add(
+                [FormHelper]::getFormControl('textbox', @{ Name = "log"; Text="SetAcl Log:"; Dock = "Fill"; ScrollBars = 'Both'; Multiline=$true;} )
+            )
+            
+            
+			$this.form.Controls['mainContent'].BringToFront()
+
 		}
-		
+
 		SetACL(){
 			$this.generateForm();
-			
+
 			$this.form.ShowDialog() | out-null
 		}
 	}
