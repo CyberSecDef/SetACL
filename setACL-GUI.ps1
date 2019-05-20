@@ -6,9 +6,14 @@ Begin{
 	clear;
 	$error.clear();
 	Add-Type -AssemblyName System.Windows.Forms | out-null
-	Add-Type -AssemblyName System.Drawing | out-null
-	Add-Type -AssemblyName System.security | out-null
+	Add-Type -AssemblyName System.Drawing | out-null	
+    Add-Type -AssemblyName System.security | out-null
 
+    Add-Type -assemblyName PresentationFramework | out-null
+    Add-Type -assemblyName PresentationCore | out-null
+    Add-Type -assemblyName WindowsBase | out-null
+    add-type -assemblyName System.Data | out-null
+    
     $global:imageList = new-Object System.Windows.Forms.ImageList
     $System_Drawing_Size = New-Object System.Drawing.Size
     $System_Drawing_Size.Width = 16
@@ -34,10 +39,6 @@ Begin{
 
 		$global:imageList.Images.Add($_, [System.Drawing.Icon]::FromHandle((new-object System.Drawing.Bitmap -argument $ims).GetHIcon()) )
 	}
-
-
-
-
 
 	class FormHelper{
 		static [object] getFormControl(
@@ -75,7 +76,7 @@ Begin{
 
 	Class SetACL{
 		$form = $null;
-
+        $computerName = $null;
 
 		[void] mnuFileOpen(){
 			write-host 'test'
@@ -174,71 +175,94 @@ Begin{
             return $appliesTo;
         }
         [void] logEvent($module, $msg){
-            $this.form.Controls['mainContent'].panel2.controls['log'].text += "`r`n[$( get-date -Format 'MM/dd/yyyy hh:mm:ss' )] - $($module) - $($msg)";
-            $this.form.Controls['mainContent'].panel2.controls['log'].SelectionStart = $this.form.Controls['mainContent'].panel2.controls['log'].Text.Length;
-            $this.form.Controls['mainContent'].panel2.controls['log'].ScrollToCaret();
+            $this.form.Content.FindName('logfile').Text += "`r`n[$( get-date -Format 'MM/dd/yyyy hh:mm:ss' )] - $($module) - $($msg)";
+            $this.form.Content.FindName('logfile').ScrollToEnd();
 
         }
         [void] expandFileSystem( $node ){
-			$node.nodes.clear()
+			$node.Items.clear()
 
-            $path = "$($node.tag.split('|')[1])\";
+            $path = "$($node.tag.split('|')[1])";
+            write-host $path
             $this.logEvent("FileSystem", "Analyzing $($path)")
-            # gci -path $path -errorAction SilentlyContinue | ft |out-string | write-host
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObject'].text = $path
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectType'].text = "File / Directory"
-
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectOwner'].text =  ( get-acl -path $path -errorAction SilentlyContinue | select -expand Owner )
-
-			gci -path $path  -errorAction SilentlyContinue | ? {$_.PSIsContainer -eq $true } | sort Name | % {
-				try{
-					if( (gci ($_.fullname) -errorAction SilentlyContinue  ) -ne $null){
-						$node.Nodes.Add($_,$_, $global:imageList.Images.indexOfKey('folder'), $global:imageList.Images.indexOfKey('folder'))
-						$node.Nodes[$_].tag = "FileSystem|$($_.fullname)"
-
-						if( (gci ($_.fullname) -errorAction SilentlyContinue  | ? { $_.PSIsContainer -eq $true } | Measure-Object | select -expand count) -gt 0){
-							$node.Nodes[$_].Nodes.Add($null,$null)
-						}
-
-						$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].rows.clear()
-						get-acl -path $path -errorAction SilentlyContinue| select -expand access | % {
-
-							$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].rows.add(
-								$_.AccessControlType,
-								$_.IdentityReference,
-								$this.getPermissions($_),
-								$this.getAppliesTo($_)
-							)
-						}
-
-					}
-				}catch{
-
-				}
-			}
+        
+            $this.form.Content.FindName('selectedObject').Content = $path
+            $this.form.Content.FindName('selectedObjectType').Content = "File / Directory"
             
-            gci -path $path  -errorAction SilentlyContinue | ? {$_.PSIsContainer -eq $false } | sort Name | % {
-                try{
-                    if( (gci ($_.fullname) -errorAction SilentlyContinue  ) -ne $null){
-						$node.Nodes.Add($_,$_, $global:imageList.Images.indexOfKey('folder'), $global:imageList.Images.indexOfKey('folder'))
-						$node.Nodes[$_].tag = "FileSystem|$($_.fullname)"
-                        
-                        
-                        
-                        
-                        if (!$global:imageList.Images.ContainsKey($_.Extension)){
-                            $iconForFile = [System.Drawing.Icon]::ExtractAssociatedIcon($_.FullName);
-                            $global:imageList.Images.Add($_.Extension, $iconForFile);
+            $this.form.Content.FindName('selectedObjectOwnerTable').Content = ( get-acl -path $path -errorAction SilentlyContinue | select -expand Owner )
+            
+            if( (Get-Item $path) -is [System.IO.DirectoryInfo]){
+                gci -path "$($path)\"  -errorAction SilentlyContinue | ? {$_.PSIsContainer -eq $true } | sort Name | % {
+                    try{
+                        if( (gci ($_.fullname) -errorAction SilentlyContinue  ) -ne $null){
+                            
+                            $treeViewItem = iex "[Windows.Controls.TreeViewItem]::new()"
+                            $treeViewItem.Header = "$($_.name)";
+                            $treeViewItem.Tag = "FileSystem|$($_.fullname)";
+                            $treeViewItem.Add_Expanded({
+                                $script:self.expandFileSystem($_.OriginalSource)
+                            })
+                            
+                            if( (gci "$($_.fullname)\" -errorAction SilentlyContinue  | Measure-Object | select -expand count) -gt 0){
+                                $treeViewItem.Items.Add($null)
+                            }
+                            $node.Items.Add($treeViewItem)
+                            $dt = new-object System.data.DataTable;                        
+                            get-acl -path $path -errorAction SilentlyContinue| select -expand access | % {
+                                $dt += new-object PSObject -property @{
+                                    Type = $_.AccessControlType;
+                                    Name = $_.IdentityReference;
+                                    Permissions = $this.getPermissions($_);
+                                    "Applies To" = $this.getAppliesTo($_);
+                                }
+                            }
+                            $this.form.Content.FindName('selectedObjectPermTable').ItemsSource = ( $dt | select Type, Name, Permissions, 'Applies To' )
                         }
-                        $node.Nodes[$_].ImageKey = $_.Extension;
-        
-        
-                        
+                    }catch{
+
                     }
-                }catch{
-                
                 }
+            
+                gci -path "$($path)\"  -errorAction SilentlyContinue | ? {$_.PSIsContainer -eq $false } | sort Name | % {
+                    try{
+
+                        $treeViewItem = iex "[Windows.Controls.TreeViewItem]::new()"
+                        $treeViewItem.Header = "$($_.name)";
+                        $treeViewItem.Tag = "FileSystem|$($_.fullname)";
+                        $treeViewItem.Add_Expanded({
+                            $script:self.expandFileSystem($_.OriginalSource)
+                        })
+                        
+                        
+                        $node.Items.Add($treeViewItem)
+                        $dt = new-object System.data.DataTable;                        
+                        get-acl -path $path -errorAction SilentlyContinue| select -expand access | % {
+                            $dt += new-object PSObject -property @{
+                                Type = $_.AccessControlType;
+                                Name = $_.IdentityReference;
+                                Permissions = $this.getPermissions($_);
+                                "Applies To" = $this.getAppliesTo($_);
+                            }
+                        }
+                        $this.form.Content.FindName('selectedObjectPermTable').ItemsSource = ( $dt | select Type, Name, Permissions, 'Applies To' )
+                        
+                    }catch{
+
+                    }
+                }
+            }else{
+                $dt = new-object System.data.DataTable;                        
+                get-acl -path $path -errorAction SilentlyContinue| select -expand access | % {
+                    $dt += new-object PSObject -property @{
+                        Type = $_.AccessControlType;
+                        Name = $_.IdentityReference;
+                        Permissions = $this.getPermissions($_);
+                        "Applies To" = $this.getAppliesTo($_);
+                    }
+                }
+                $this.form.Content.FindName('selectedObjectPermTable').ItemsSource = ( $dt | select Type, Name, Permissions, 'Applies To' )
             }
+            
         }
 
 		[void] expandRegistry( $node ){
@@ -282,98 +306,7 @@ Begin{
         }
 
 		[void] generateForm(){
-			$script:self = $this
-			$this.form = [FormHelper]::getFormControl('Form', @{ Width = "800"; Height = "400"; Text = "SetACL PowerShell Studio"; StartPosition = "CenterScreen"; FormBorderStyle = "Sizable"; Topmost = $false; MinimizeBox = $true; MaximizeBox = $true;} )
-
-			$this.form.Controls.Add(( [FormHelper]::getFormControl('ToolStrip', @{ Name = 'mainToolStrip'; Dock = 'Top';} )) ) | out-null
-			$this.form.Controls.Add(( [FormHelper]::getFormControl('MenuStrip', @{ Name = 'menuMain'; Dock = 'Top';} )) )| out-null
-			$this.form.controls['menuMain'].Items.Add( ( [FormHelper]::getFormControl('ToolStripMenuItem', @{ Name = 'menuFile'; Text = "File";} ) ) ) | out-null
-			$this.form.controls['menuMain'].Items['menuFile'].DropDownItems.Add( ( [FormHelper]::getFormControl('ToolStripMenuItem', @{ Name = 'menuOpen'; ShortcutKeys = "Control, O"; Text = "Open"} ) ) ) | out-null
-			$this.form.controls['menuMain'].Items['menuFile'].DropDownItems['menuOpen'].Add_Click({$script:self.mnuFileOpen()})
-
-            $this.form.controls.add( ( [FormHelper]::getFormControl( 'statusbar', @{ Name = 'status';}) ) );
-
-			$this.form.Controls.Add( ( [FormHelper]::getFormControl( 'SplitContainer', @{ Name = 'mainContent'; Dock = 'Fill'; SplitterWidth = 2; Orientation = 'Horizontal'; SplitterDistance = '200'; Panel1MinSize = '200'; backcolor = '#cccccc'; AutoSize=$true;} ) ) ) | out-null
-
-			$this.form.controls['mainContent'].panel1.backcolor = 'white';
-			$this.form.controls['mainContent'].panel2.backcolor = 'white';
-
-			$this.form.Controls['mainContent'].panel1.controls.add( (
-				[FormHelper]::getFormControl( 'SplitContainer', @{Name = 'mainBody'; Dock = 'Fill'; SplitterWidth = 2; Panel1MinSize = 100; Panel2MinSize = 100;  backcolor = '#cccccc'; AutoSize=$true; } )
-			) ) | out-null
-
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.backcolor = 'white';
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.backcolor = 'white';
-
-            $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls.add( (
-                [FormHelper]::getFormControl('treeview', @{ Name = "treeNodes"; Dock = "Fill"; 'ImageList' = $global:imageList; AutoSize=$true;} )
-            ) ) | out-null
-
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls.add( (
-                [FormHelper]::getFormControl('FlowLayoutPanel', @{ Name = "contentPanel"; dock="Fill"; AutoScroll=$true; FlowDirection = 'TopDown'; WrapContents = $false; AutoSize=$true; } )
-            ) ) | out-null
-
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls.add( (
-                [FormHelper]::getFormControl('label', @{ Name = "selObject"; Text="SelObject"; AutoSize = $true; } )
-            )) | out-null
-
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls.add( (
-                [FormHelper]::getFormControl('label', @{ Name = "selObjectType"; Text="SelObjectType"; AutoSize = $true;} )
-            ) ) | out-null
-
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls.add( (
-                [FormHelper]::getFormControl('label', @{ Name = "selObjectOwner"; Text="SelObjectOwner"; AutoSize = $true;} )
-            ) ) | out-null
-
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls.add( (
-				[FormHelper]::getFormControl('DataGridView', @{ Name = "selObjectPerms"; Text="SelObjectPerms"; Width= ($this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].width - 25); Autosize=$true; Anchor="Top,left"; AutoSizeColumnsMode ="Fill";} )
-            ) ) | out-null
-
-            $this.form.add_Resize({
-                $script:self.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].width = ($script:self.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].width - 25);
-            })
-            
-            $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.add_Resize({
-                $script:self.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].width = ($script:self.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].width - 25);
-            })
-
-            $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.add_Resize({
-                $script:self.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].width = ($script:self.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].width - 25);
-            })
-
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].Columns.Add(
-				[FormHelper]::getFormControl('DataGridViewTextboxColumn', @{ Name = "Type"; } )
-			)
-
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].Columns.Add(
-				[FormHelper]::getFormControl('DataGridViewTextboxColumn', @{ Name = "Name"; } )
-			)
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].Columns.Add(
-				[FormHelper]::getFormControl('DataGridViewTextboxColumn', @{ Name = "Permissions"; } )
-			)
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObjectPerms'].Columns.Add(
-				[FormHelper]::getFormControl('DataGridViewTextboxColumn', @{ Name = "Applies To"; } )
-			)
-
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel2.controls['contentPanel'].controls['selObject'].font = New-Object System.Drawing.Font("Arial",18, (iex "[System.Drawing.FontStyle]::Bold") ) ;
-
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].add_BeforeExpand( {
-				$script:self.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].selectedNode = $_.node
-			} )
-			$this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].add_AfterSelect( {$script:self.nodeClicked( $this ) } )
-
-            $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes.Add("root",(hostname), $global:imageList.Images.indexOfKey('computer'),$global:imageList.Images.indexOfKey('computer') );
-
-            $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes.Add('FileSystem','FileSystem', $global:imageList.Images.indexOfKey('filesystem'), $global:imageList.Images.indexOfKey('filesystem'))
-
-            $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes.Add('Printers','Printers', $global:imageList.Images.indexOfKey('printer'), $global:imageList.Images.indexOfKey('printer'))
-
-            $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes.Add('Registry', 'Registry', $global:imageList.Images.indexOfKey('registry'), $global:imageList.Images.indexOfKey('registry'))
-
-            $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes.Add('Services', 'Services', $global:imageList.Images.indexOfKey('service'), $global:imageList.Images.indexOfKey('service'))
-
-            $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes.Add('Shares','Shares', $global:imageList.Images.indexOfKey('share'), $global:imageList.Images.indexOfKey('share'))
-
+			
             get-psdrive | ? {$_.Provider.Name -eq 'FileSystem' } | Sort Name | % {
                 $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes['FileSystem'].Nodes.add( "$($_.name):", "$($_.name):", $global:imageList.Images.indexOfKey('drive'), $global:imageList.Images.indexOfKey('drive') )
                 $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes['FileSystem'].Nodes[ "$($_.name):" ].Tag = "FileSystem|$($_.name):"
@@ -384,7 +317,7 @@ Begin{
 
             }
 
-            get-printer | Sort Name | % {
+            $this.getPrinters() | % {
                 $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes['Printers'].Nodes.add("$($_.name)", "$($_.name)", $global:imageList.Images.indexOfKey('printer'), $global:imageList.Images.indexOfKey('printer') )
             }
 
@@ -397,35 +330,58 @@ Begin{
 				}
             }
 
-            get-service | Sort Name | % {
+            $this.getServices() | % {
                 $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes['Services'].Nodes.add("$($_.name)", "$($_.name)", $global:imageList.Images.indexOfKey('service'), $global:imageList.Images.indexOfKey('service') )
             }
 
             get-SmbShare | Sort Name | % {
                 $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].Nodes['Shares'].Nodes.add("$($_.name)", "$($_.name)", $global:imageList.Images.indexOfKey('share'), $global:imageList.Images.indexOfKey('share') )
             }
-
-            $this.form.Controls['mainContent'].panel1.controls['mainBody'].panel1.controls['treeNodes'].Nodes['root'].expand();
-            
-            $this.form.Controls['mainContent'].panel2.controls.Add(
-                [FormHelper]::getFormControl('textbox', @{ Name = "log"; Text="SetAcl Log:"; Dock = "Fill"; ScrollBars = 'Both'; Multiline=$true;} )
-            )
-            
-            
-			$this.form.Controls['mainContent'].BringToFront()
-
 		}
+       
+        [object] getPrinters(){
+            return get-printer -computerName $this.computerName | Sort Name;
+        }
+        
+        [object] getServices(){
+            return get-service -computerName $this.computerName | Sort Name;
+        }
 
 		SetACL(){
-			$this.generateForm();
+            $script:self = $this
+            $this.computerName = ( hostname )
+			
+            $reader = New-Object System.Xml.XmlNodeReader ([xml](gc "$( $PSScriptRoot)\SetACL-gui.xaml"))
+            $xamlReader = iex "[Windows.Markup.XamlReader]"
+            $this.form = $xamlReader::Load( $reader ) 
+                
+            $this.form.Content.FindName('selectedObject').Content = $this.computerName 
+            $this.form.Content.FindName('treeObjects').Items.GetItemAt(0).Header = $this.computerName 
+ 
+            
+            get-psdrive | ? {$_.Provider.Name -eq 'FileSystem' } | Sort Name | % {
+                $treeViewItem = iex "[Windows.Controls.TreeViewItem]::new()"
+                $treeViewItem.Header = "$($_.name):";
+                $treeViewItem.Tag = "FileSystem|$($_.name):";
+                $treeViewItem.Add_Expanded({
+                    $script:self.expandFileSystem($_.OriginalSource)
+                })
+                $treeViewItem.Add_Selected({
+                    $script:self.expandFileSystem($_.OriginalSource)
+                })
+                $subItemIndex = $this.form.Content.FindName('treeObjects').Items.GetItemAt(0).Items.GetItemAt(0).Items.Add( $treeViewItem )
+				if( (gci "$($_.fullname)\" -errorAction SilentlyContinue  | ? { $_.PSIsContainer -eq $true } | Measure-Object | select -expand count) -gt 0){
+					$this.form.Content.FindName('treeObjects').Items.GetItemAt(0).Items.GetItemAt(0).Items.GetItemAt($subItemIndex).Items.Add($null)
+				}
 
-			$this.form.ShowDialog() | out-null
+            }
+            
+            $this.form.ShowDialog() | out-null
 		}
 	}
 }
 Process{
 	$setAcl = [SetACL]::new();
-
 }
 End{
 	$error | select *
