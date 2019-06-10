@@ -7,6 +7,14 @@
         BorderThickness="1"
         >
     <Window.Resources>
+    
+        <ContextMenu  x:Key="DataRowContextMenu" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=DataGrid, Mode=FindAncestor}}">
+            <MenuItem x:Name="permsAdd"  Header="Add New ACL" Command="{Binding EditResourceCommand}" CommandParameter="{Binding}" />
+            <MenuItem x:Name="permsEdit"  Header="Edit ACL" Command="{Binding EditResourceCommand}" CommandParameter="{Binding}" />
+            <MenuItem x:Name="permsRemove"  Header="Remove ACL" Command="{Binding EditResourceCommand}" CommandParameter="{Binding}" />
+        </ContextMenu>
+                    
+                    
     <Style x:Key="btn" TargetType="Button">
         <Setter Property="FontFamily" Value="Helvetica Neue,Helvetica,Arial,sans-serif"/>
         <Setter Property="FontSize" Value="14"/>
@@ -261,7 +269,7 @@
         
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="150" MinWidth="150" MaxWidth="300"/>
+                <ColumnDefinition Width="200" MinWidth="150" MaxWidth="300"/>
                 <ColumnDefinition Width="1" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
@@ -286,31 +294,82 @@
                     <Label x:Name="selectedObjectOwnerTable" Content="Owner Table" DockPanel.Dock="Top" />
                     <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
                         <Label x:Name="perms" Content="Permissions" FontSize="16" FontWeight="Bold" DockPanel.Dock="Top" />
-                        <Button x:Name="btnAddACL"  
-                            Content = "Add ACL" 
-                            ClickMode = "Hover" 
-                            Style="{StaticResource btn-primary}"/> 
                         
-                        <Button x:Name="btnClearAcl"  
-                            Content = "Clear ACL" 
-                            ClickMode = "Hover" 
-                            Style="{StaticResource btn-danger}"
-                            />
-                            
-                        <Button x:Name="btnSaveAcl"  
-                            Content = "Save ACL" 
-                            ClickMode = "Hover" 
-                            Style="{StaticResource btn-success}"/>
                         <Button x:Name="btnShowAudit"  
                             Content = "Show Auditing" 
-                            ClickMode = "Hover" 
+                            ClickMode = "Press" 
                             Style="{StaticResource btn-default}"/> 
                             
+                        <Button x:Name="btnShowEffectivePerms"  
+                            Content = "Show EffectivePerms" 
+                            ClickMode = "Press" 
+                            Style="{StaticResource btn-default}"/> 
                     </StackPanel>
-                    <DataGrid x:Name="selectedObjectPermTable"  HorizontalAlignment="Stretch" Margin="0,5,0,0" VerticalAlignment="Stretch" Height="Auto" DockPanel.Dock="Top" />  
+                    
+                    
+        
+                    <DataGrid x:Name="selectedObjectPermTable"  HorizontalAlignment="Stretch" Margin="0,5,0,0" VerticalAlignment="Stretch" Height="Auto" DockPanel.Dock="Top" CanUserSortColumns="True">
+                         <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                
+                                <Setter Property="ContextMenu" Value="{StaticResource DataRowContextMenu}" />
+                            </Style>
+                        </DataGrid.RowStyle>
+                    
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Type" Binding="{Binding Type}" />
+                            <DataGridTextColumn Header="Principal" Binding="{Binding Principal}" />
+                            <DataGridTextColumn Header="Access" Binding="{Binding Access}" />
+                            <DataGridTextColumn Header="Inherited" Binding="{Binding Inherited}" />
+                            <DataGridTextColumn Header="Applies To" Binding="{Binding Applies To}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    
                 </DockPanel>
-                
+            
+                <Border x:Name="Overlay" Panel.ZIndex="1000" Visibility="Collapsed" CornerRadius="1" BorderBrush="Gray" Background="LightGray" BorderThickness="2" DockPanel.Dock="Top"  HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <StackPanel   Orientation="Vertical" HorizontalAlignment="Center" Width="Auto">
+                        <StackPanel.Background>
+                            <SolidColorBrush Color="White" />
+                        </StackPanel.Background>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Width="150">Principal</Label>
+                            <TextBox x:Name="permsPrincipal" Width="200" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Width="150">Permissions</Label>
+                            <StackPanel Orientation="Vertical">
+                                <RadioButton x:Name="permsFC">Full Control</RadioButton>
+                                <RadioButton x:Name="permsM">Modify</RadioButton>
+                                <RadioButton x:Name="permsRE">Read and Execute</RadioButton>
+                                <RadioButton x:Name="permsR">Read</RadioButton>
+                                <RadioButton x:Name="permsW">Write</RadioButton>
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Width="150">Applies To</Label>
+                            <StackPanel Orientation="Vertical">
+                                <ComboBox x:Name="permsAppliesTo" Height="25" Width="200" IsEnabled="True" SelectedIndex="0">
+                                    <ComboBoxItem Content="This Folder, Subfolders and Files"></ComboBoxItem>
+                                    <ComboBoxItem Content="This Folder and Subfolders"></ComboBoxItem>
+                                    <ComboBoxItem Content="This Folder and Files"></ComboBoxItem>
+                                    <ComboBoxItem Content="This Folder Only"></ComboBoxItem>
+                                    <ComboBoxItem Content="Subfolders and Files"></ComboBoxItem>                                    
+                                    <ComboBoxItem Content="Subfolders Only"></ComboBoxItem>
+                                    <ComboBoxItem Content="Files Only"></ComboBoxItem>
+                                </ComboBox>
+                            </StackPanel>
+                        </StackPanel>
+                        
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button Width="150" x:Name="permsExec" Style="{StaticResource btn-success}" Content="Execute"/>
+                            <Button Width="150" x:Name="permsCancel" Style="{StaticResource btn-info}" Content="Cancel"/>
+                        </StackPanel>
+                    </StackPanel>            
+                </Border>
             </Grid>
+            
+            
         </Grid>
         
         <GridSplitter Grid.Row="3" Height="1" HorizontalAlignment="Stretch"  Background="#cccccc"/>
@@ -324,4 +383,5 @@
             <StatusBar Name="statusbar" DockPanel.Dock="Bottom">statusbar</StatusBar>
         </Grid> 
     </Grid>
+    
 </Window>
